@@ -1,0 +1,322 @@
+local module = {}
+
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local playerGui = player:WaitForChild("PlayerGui")
+
+local function getCharacter()
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	return character, humanoid, hrp
+end
+
+local screenGui = playerGui:FindFirstChild("TurquoizUtilsGUI")
+if not screenGui then
+	screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "TurquoizUtilsGUI"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = playerGui
+end
+
+local frame = screenGui:FindFirstChild("TurquoizUtilsFrame")
+if not frame then
+	frame = Instance.new("Frame")
+	frame.Name = "TurquoizUtilsFrame"
+	frame.Parent = screenGui
+end
+frame.Size = UDim2.new(0.125,0,0.25,0)
+frame.Position = UDim2.new(0.05,0,0.125,0)
+frame.BackgroundColor3 = Color3.fromRGB(50,50,70)
+frame.BorderSizePixel = 2
+
+local dragging, dragStart, startPos = false
+local function updateDrag(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(
+		startPos.X.Scale, startPos.X.Offset + delta.X,
+		startPos.Y.Scale, startPos.Y.Offset + delta.Y
+	)
+end
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		updateDrag(input)
+	end
+end)
+
+local function makeButton(parent, name, text, posY)
+	local b = parent:FindFirstChild(name)
+	if not b then
+		b = Instance.new("TextButton")
+		b.Name = name
+		b.Parent = parent
+	end
+	b.Size = UDim2.new(0.9,0,0.1,0)
+	b.Position = UDim2.new(0.05,0,posY,0)
+	b.BackgroundColor3 = Color3.fromRGB(0,255,255)
+	b.Text = text
+	b.TextColor3 = Color3.fromRGB(0,0,0)
+	b.Font = Enum.Font.SourceSansBold
+	b.TextSize = 20
+	b.BorderSizePixel = 0
+	return b
+end
+
+local function makeTextbox(parent, name, placeholder, posY)
+	local tb = parent:FindFirstChild(name)
+	if not tb then
+		tb = Instance.new("TextBox")
+		tb.Name = name
+		tb.Text = ""
+		tb.Parent = parent
+	end
+	tb.Size = UDim2.new(0.9,0,0.1,0)
+	tb.Position = UDim2.new(0.05,0,posY,0)
+	tb.BackgroundColor3 = Color3.fromRGB(255,0,0)
+	tb.PlaceholderText = placeholder
+	tb.TextColor3 = Color3.fromRGB(0,0,0)
+	tb.ClearTextOnFocus = false
+	tb.Font = Enum.Font.SourceSansBold
+	tb.TextSize = 20
+	tb.BorderSizePixel = 0
+	tb.TextXAlignment = Enum.TextXAlignment.Center
+	return tb
+end
+
+local titleLabel = frame:FindFirstChild("TitleLabel")
+if not titleLabel then
+	titleLabel = Instance.new("TextLabel")
+	titleLabel.Name = "TitleLabel"
+	titleLabel.Parent = frame
+end
+titleLabel.Size = UDim2.new(0.9,0,0.1,0)
+titleLabel.Position = UDim2.new(0.05,0,0,0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Turquoiz Utils"
+titleLabel.TextColor3 = Color3.fromRGB(255,255,255)
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextSize = 20
+
+local closeButton = frame:FindFirstChild("CloseButton")
+if not closeButton then
+	closeButton = Instance.new("TextButton")
+	closeButton.Name = "CloseButton"
+	closeButton.Parent = frame
+end
+closeButton.Size = UDim2.new(0.1,0,0.1,0)
+closeButton.Position = UDim2.new(0.9,0,0,0)
+closeButton.BackgroundColor3 = Color3.fromRGB(200,60,60)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255,255,255)
+closeButton.TextScaled = true
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.BorderSizePixel = 0
+closeButton.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
+end)
+
+local function makePage(name)
+	local page = frame:FindFirstChild(name)
+	if not page then
+		page = Instance.new("Frame")
+		page.Name = name
+		page.Parent = frame
+	end
+	page.Size = UDim2.new(1,0,0.9,0)
+	page.Position = UDim2.new(0,0,0.1,0)
+	page.BackgroundTransparency = 1
+	page.Visible = false
+	return page
+end
+
+local mainPage = makePage("MainPage")
+mainPage.Visible = true
+local playerPage = makePage("PlayerPage")
+local movementPage = makePage("MovementPage")
+local settingsPage = makePage("SettingsPage")
+
+local mainButtons = {
+	makeButton(mainPage,"PlayerCat","Player",0.1),
+	makeButton(mainPage,"MovementCat","Movement",0.25),
+	makeButton(mainPage,"SettingsCat","Settings",0.4)
+}
+mainButtons[1].MouseButton1Click:Connect(function()
+	mainPage.Visible = false
+	playerPage.Visible = true
+end)
+mainButtons[2].MouseButton1Click:Connect(function()
+	mainPage.Visible = false
+	movementPage.Visible = true
+end)
+mainButtons[3].MouseButton1Click:Connect(function()
+	mainPage.Visible = false
+	settingsPage.Visible = true
+end)
+
+local function addBackButton(page)
+	local back = makeButton(page,"BackButton","Back",0.0)
+	back.MouseButton1Click:Connect(function()
+		page.Visible = false
+		mainPage.Visible = true
+	end)
+end
+addBackButton(playerPage)
+addBackButton(movementPage)
+addBackButton(settingsPage)
+
+local walkSpeedBox = makeTextbox(playerPage,"WalkSpeedBox","WalkSpeed",0.2)
+local jumpPowerBox = makeTextbox(playerPage,"JumpPowerBox","JumpPower",0.35)
+local jumpHeightBox = makeTextbox(playerPage,"JumpHeightBox","JumpHeight",0.5)
+
+local function applyPlayerValues()
+	local _, humanoid = getCharacter()
+	local ws = tonumber(walkSpeedBox.Text)
+	local jp = tonumber(jumpPowerBox.Text)
+	local jh = tonumber(jumpHeightBox.Text)
+	if ws then humanoid.WalkSpeed = ws end
+	if jp then humanoid.JumpPower = jp end
+	if jh then humanoid.JumpHeight = jh end
+end
+
+for _, box in pairs({walkSpeedBox, jumpPowerBox, jumpHeightBox}) do
+	box.Changed:Connect(function(prop)
+		if prop == "Text" then applyPlayerValues() end
+	end)
+	box.FocusLost:Connect(function(enterPressed)
+		if enterPressed then applyPlayerValues() end
+	end)
+end
+
+local resetCharButton = makeButton(playerPage,"ResetCharacterButton","Reset Character",0.65)
+resetCharButton.MouseButton1Click:Connect(function()
+	local character, humanoid, hrp = getCharacter()
+	local lastWS = tonumber(walkSpeedBox.Text)
+	local lastJP = tonumber(jumpPowerBox.Text)
+	local lastJH = tonumber(jumpHeightBox.Text)
+
+	local connection
+	connection = player.CharacterAdded:Connect(function(newCharacter)
+		local newHum = newCharacter:WaitForChild("Humanoid")
+		if lastWS then newHum.WalkSpeed = lastWS end
+		if lastJP then newHum.JumpPower = lastJP end
+		if lastJH then newHum.JumpHeight = lastJH end
+		connection:Disconnect()
+	end)
+
+	humanoid.Health = 0
+end)
+
+local resetReturnButton = makeButton(playerPage,"ResetReturnButton","Reset & Return",0.8)
+resetReturnButton.MouseButton1Click:Connect(function()
+	local character, humanoid, hrp = getCharacter()
+	local lastPos = hrp.Position
+	local lastWS = tonumber(walkSpeedBox.Text)
+	local lastJP = tonumber(jumpPowerBox.Text)
+	local lastJH = tonumber(jumpHeightBox.Text)
+
+	local connection
+	connection = player.CharacterAdded:Connect(function(newCharacter)
+		local newHum = newCharacter:WaitForChild("Humanoid")
+		local newHRP = newCharacter:WaitForChild("HumanoidRootPart")
+		newHRP.CFrame = CFrame.new(lastPos)
+		if lastWS then newHum.WalkSpeed = lastWS end
+		if lastJP then newHum.JumpPower = lastJP end
+		if lastJH then newHum.JumpHeight = lastJH end
+		connection:Disconnect()
+	end)
+
+	humanoid.Health = 0
+end)
+
+settingsPage.Visible = false
+addBackButton(settingsPage)
+
+local settingsStartY = 0.15
+local settingsSpacing = 0.125
+
+local platformXBox = makeTextbox(settingsPage,"PlatformXBox","Platform X",settingsStartY)
+local platformYBox = makeTextbox(settingsPage,"PlatformYBox","Platform Y",settingsStartY + settingsSpacing)
+local platformZBox = makeTextbox(settingsPage,"PlatformZBox","Platform Z",settingsStartY + 2*settingsSpacing)
+
+movementPage.Visible = false
+addBackButton(movementPage)
+
+local movementStartY = 0.15
+local movementSpacing = 0.125
+
+local teleportEnabled = true
+local ctrlHeld = false
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if not processed and input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == Enum.KeyCode.LeftControl then
+			ctrlHeld = true
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, processed)
+	if not processed and input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == Enum.KeyCode.LeftControl then
+			ctrlHeld = false
+		end
+	end
+end)
+
+local mouse = player:GetMouse()
+mouse.Button1Down:Connect(function()
+	if ctrlHeld and teleportEnabled and mouse.Target then
+		local _,_,hrp = getCharacter()
+		hrp.CFrame = CFrame.new(mouse.Hit.p)
+	end
+end)
+
+local teleportButton = makeButton(movementPage,"TeleportButton","CTRL + M1 Teleport: OFF",movementStartY)
+teleportEnabled = false
+teleportButton.MouseButton1Click:Connect(function()
+	teleportEnabled = not teleportEnabled
+	teleportButton.Text = "CTRL + M1 Teleport: " .. (teleportEnabled and "ON" or "OFF")
+end)
+
+local function removePlatform()
+	if _G.PlatformPart and _G.PlatformPart.Parent then
+		_G.PlatformPart:Destroy()
+		_G.PlatformPart = nil
+	end
+end
+
+local createPlatformButton = makeButton(movementPage,"CreatePlatformButton","Create Platform",movementStartY + movementSpacing)
+createPlatformButton.MouseButton1Click:Connect(function()
+	local _,_,hrp = getCharacter()
+	removePlatform()
+
+	local sizeX = tonumber(platformXBox.Text) or 5
+	local sizeY = tonumber(platformYBox.Text) or 1
+	local sizeZ = tonumber(platformZBox.Text) or 5
+
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(sizeX,sizeY,sizeZ)
+	part.Anchored = true
+	part.Color = Color3.fromRGB(48,213,200)
+	part.Material = Enum.Material.Neon
+	part.CFrame = hrp.CFrame * CFrame.new(0,-3.8,0)
+	part.Parent = workspace
+	_G.PlatformPart = part
+
+	local humanoid = getCharacter().Humanoid
+	humanoid.Died:Connect(removePlatform)
+end)
+
+return module
