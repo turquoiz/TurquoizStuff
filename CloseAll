@@ -1,4 +1,8 @@
-local plrgui = game.Players.LocalPlayer.PlayerGui
-plrgui.TurquoizPlayerColliderCS:Destroy()
-plrgui.TurquoizUtilsGUI
-plrgui.TurquoizExec
+local plrGui = game.Players.LocalPlayer.PlayerGui
+
+for _, guiName in ipairs({"TurquoizPlayerColliderCS", "TurquoizUtilsGUI", "TurquoizExec"}) do
+    local gui = plrGui:FindFirstChild(guiName)
+    if gui then
+        gui:Destroy()
+    end
+end
