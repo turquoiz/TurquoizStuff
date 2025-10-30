@@ -1,0 +1,4 @@
+local plrgui = game.Players.LocalPlayer.PlayerGui
+plrgui.TurquoizPlayerColliderCS:Destroy()
+plrgui.TurquoizUtilsGUI
+plrgui.TurquoizExec
