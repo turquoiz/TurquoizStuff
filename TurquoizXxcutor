@@ -1,122 +1,154 @@
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local playergui = player:WaitForChild("PlayerGui")
+local screenguiname = "TurquoizExecV2"
+local orgSize = UDim2.new(0.22361, 0, 0.4164, 0)
+local minSize = UDim2.new(0.028332, 0, 0.05828, 0)
 
-local plr = Players.LocalPlayer
-local playerGui = plr:WaitForChild("PlayerGui")
+local screengui, frame, cmdbox, dragdetector, title, runButton, minimiseButton, uicorner, closeButton
 
-local screenguiname = "TurquoizExec"
-local existingGui = playerGui:FindFirstChild(screenguiname)
-if existingGui then existingGui:Destroy() end
-
-local screengui = Instance.new("ScreenGui")
-screengui.Name = screenguiname
-screengui.IgnoreGuiInset = true
-screengui.Parent = playerGui
-
--- Main frame
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 200) -- wider window
-frame.Position = UDim2.new(0.5, -200, 0.5, -100)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-frame.BorderSizePixel = 0
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.Parent = screengui
-frame.ClipsDescendants = true
-frame.ZIndex = 2
-
--- Rounded corners
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = frame
-
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
-title.Text = "Turquoiz Executor"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 20
-title.Parent = frame
-title.ZIndex = 2
-
--- Close button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextScaled = true
-closeBtn.Parent = frame
-closeBtn.ZIndex = 2
-closeBtn.MouseButton1Click:Connect(function()
-	screengui:Destroy()
-end)
-
--- TextBox
-local inputbox = Instance.new("TextBox")
-inputbox.Size = UDim2.new(1, -20, 1, -60)
-inputbox.Position = UDim2.new(0, 10, 0, 40)
-inputbox.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-inputbox.TextColor3 = Color3.fromRGB(255, 255, 255)
-inputbox.ClearTextOnFocus = false
-inputbox.MultiLine = true
-inputbox.Font = Enum.Font.Code
-inputbox.TextSize = 18
-inputbox.PlaceholderText = "-- Type Lua code here"
-inputbox.Parent = frame
-inputbox.ZIndex = 2
-inputbox.Text = ""
-
--- Run button
-local runButton = Instance.new("TextButton")
-runButton.Size = UDim2.new(0, 60, 0, 30)
-runButton.Position = UDim2.new(1, -70, 1, -35)
-runButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-runButton.Text = "Run"
-runButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-runButton.Font = Enum.Font.SourceSansBold
-runButton.TextSize = 18
-runButton.Parent = frame
-runButton.ZIndex = 2
-
-runButton.MouseButton1Click:Connect(function()
-	local func, err = loadstring(inputbox.Text)
-	if func then
-		local success, runtimeErr = pcall(func)
-		if not success then
-			warn("Runtime error:", runtimeErr)
-		end
-	else
-		warn("Syntax error:", err)
+local function create()
+	if playergui:FindFirstChild(screenguiname) then
+		return
 	end
-end)
 
--- Make draggable
-local dragging, dragStart, startPos
-frame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = frame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+	screengui = Instance.new("ScreenGui")
+	screengui.Name = screenguiname
+	screengui.Parent = playergui
+
+	frame = Instance.new("Frame")
+	frame.Position = UDim2.new(0.3,0,0.4,0)
+	frame.Size = orgSize
+	frame.Parent = screengui
+	frame.BackgroundColor3 = Color3.fromRGB(188, 213, 255)
+
+	uicorner = Instance.new("UICorner")
+	uicorner.Parent = frame
+
+	dragdetector = Instance.new("UIDragDetector")
+	dragdetector.Parent = frame
+
+	cmdbox = Instance.new("TextBox")
+	cmdbox.ClearTextOnFocus = false
+	cmdbox.Position = UDim2.new(0, 0, 0.3333, 0)
+	cmdbox.Size = UDim2.new(1, 0, 0.6667, 0)
+	cmdbox.ZIndex = 2
+	cmdbox.Parent = frame
+	cmdbox.Text = ""
+	cmdbox.PlaceholderText = "Insert LUA here.."
+	cmdbox.BackgroundColor3 = Color3.fromRGB(0, 200, 109)
+	cmdbox.PlaceholderColor3 = Color3.fromRGB(0, 0, 0)
+	cmdbox.MultiLine = true
+	cmdbox.TextSize = 12
+	cmdbox.ClipsDescendants = true
+	cmdbox.TextXAlignment = "Left"
+	cmdbox.TextYAlignment = "Top"
+
+	uicorner = Instance.new("UICorner")
+	uicorner.Parent = cmdbox
+
+	title = Instance.new("TextLabel")
+	title.Parent = frame
+	title.Text = "Turquoiz Executor V1.0.1"
+	title.Size = UDim2.new(0.7, 0, 0.1, 0)
+	title.BackgroundTransparency = 1
+	title.TextSize = 12
+
+	runButton = Instance.new("TextButton")
+	runButton.Parent = frame
+	runButton.Text = "Run"
+	runButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+	runButton.Size = UDim2.new(0.3333, 0, 0.1, 0)
+	runButton.TextColor = BrickColor.new("Grey")
+	runButton.Position = UDim2.new(0.3333, 0, 0.2, 0)
+
+	uicorner = Instance.new("UICorner")
+	uicorner.Parent = runButton
+
+	runButton.MouseButton1Click:Connect(function()
+		local func, err = loadstring(cmdbox.Text)
+		if func then
+			local success, runtimeErr = pcall(func)
+			if not success then
+				warn("Runtime error:", runtimeErr)
 			end
-		end)
-	end
+		else
+			warn("Syntax error:", err)
+		end
+	end)
+
+	minimiseButton = Instance.new("TextButton")
+	minimiseButton.Parent = frame
+	minimiseButton.Size = UDim2.new(0.06, 0, 0.07, 0)
+	minimiseButton.Position = UDim2.new(0.8, 0, 0.05, 0)
+	minimiseButton.Text = "-"
+	minimiseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+	minimiseButton.TextScaled = true
+
+	closeButton = Instance.new("TextButton")
+	closeButton.Parent = frame
+	closeButton.Size = UDim2.new(0.06, 0, 0.07, 0)
+	closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	closeButton.Text = "X"
+	closeButton.Position = UDim2.new(0.8, 0, 0.127, 0)
+
+	closeButton.Activated:Connect(function()
+		if screengui then
+			screengui:Destroy()
+		end
+		if script then
+			script:Destroy()
+		end
+	end)
+
+	local isMinimized = false
+
+	minimiseButton.Activated:Connect(function()
+		if not isMinimized then
+			frame.Size = minSize
+			for _, i in frame:GetChildren() do
+				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
+					if i == minimiseButton then
+						i.Size = UDim2.new(0.5, 0, 0.5, 0)
+						i.Position = UDim2.new(0, 0, 0, 0)
+						i.Visible = true
+					end
+					if i == closeButton then
+						i.Size = UDim2.new(0.5, 0, 0.5, 0)
+						i.Position = UDim2.new(0, 0, 0.5, 0)
+						i.Visible = true
+					end
+				else
+					i.Visible = false
+				end
+			end
+			isMinimized = true
+			frame.Position = UDim2.new(-0.014166, 0, 0.7, 0)
+		else
+			frame.Size = orgSize
+			for _, i in frame:GetChildren() do
+				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
+					if i == minimiseButton then
+						i.Size = UDim2.new(0.06, 0, 0.07, 0)
+						i.Position = UDim2.new(0.8, 0, 0.05, 0)
+						i.Visible = true
+					end
+					if i == closeButton then
+						i.Size = UDim2.new(0.06, 0, 0.07, 0)
+						i.Position = UDim2.new(0.8, 0, 0.127, 0)
+						i.Visible = true
+					end
+				else
+					i.Visible = true
+				end
+			end
+			isMinimized = false
+		end
+	end)
+end
+
+player.CharacterAdded:Connect(function()
+	task.wait(0.2)
+	create()
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-		frame.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
-end)
+create()
