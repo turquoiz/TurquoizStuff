@@ -1,0 +1,115 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local plr = Players.LocalPlayer
+local playerGui = plr:WaitForChild("PlayerGui")
+
+local screenguiname = "TurquoizExec"
+local existingGui = playerGui:FindFirstChild(screenguiname)
+if existingGui then existingGui:Destroy() end
+
+local screengui = Instance.new("ScreenGui")
+screengui.Name = screenguiname
+screengui.IgnoreGuiInset = true
+screengui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 200)
+frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Parent = screengui
+frame.ClipsDescendants = true
+frame.ZIndex = 2
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundTransparency = 1
+title.Text = "Turquoiz Executor"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = frame
+title.ZIndex = 2
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextScaled = true
+closeBtn.Parent = frame
+closeBtn.ZIndex = 2
+closeBtn.MouseButton1Click:Connect(function()
+	screengui:Destroy()
+end)
+
+local inputbox = Instance.new("TextBox")
+inputbox.Size = UDim2.new(1, -20, 1, -60)
+inputbox.Position = UDim2.new(0, 10, 0, 40)
+inputbox.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+inputbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+inputbox.ClearTextOnFocus = false
+inputbox.MultiLine = true
+inputbox.Font = Enum.Font.Code
+inputbox.TextSize = 18
+inputbox.PlaceholderText = "-- Type Lua code here"
+inputbox.Parent = frame
+inputbox.ZIndex = 2
+inputbox.Text = ""
+
+local runButton = Instance.new("TextButton")
+runButton.Size = UDim2.new(0, 60, 0, 30)
+runButton.Position = UDim2.new(1, -70, 1, -35)
+runButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+runButton.Text = "Run"
+runButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+runButton.Font = Enum.Font.SourceSansBold
+runButton.TextSize = 18
+runButton.Parent = frame
+runButton.ZIndex = 2
+
+runButton.MouseButton1Click:Connect(function()
+	local func, err = loadstring(inputbox.Text)
+	if func then
+		local success, runtimeErr = pcall(func)
+		if not success then
+			warn("Runtime error:", runtimeErr)
+		end
+	else
+		warn("Syntax error:", err)
+	end
+end)
+
+local dragging, dragStart, startPos
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
