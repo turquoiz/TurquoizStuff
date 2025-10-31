@@ -1,22 +1,46 @@
 local Players = game:GetService("Players")
-
 local plr = Players.LocalPlayer
-local playerGui = plr:WaitForChild("PlayerGui")
 
+-- Create ScreenGui
+local screengui = Instance.new("ScreenGui")
+screengui.Name = "TurquoizViewer"
+screengui.ResetOnSpawn = false
+screengui.IgnoreGuiInset = true
+screengui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screengui.Parent = plr:WaitForChild("PlayerGui")
+
+-- Create main ScrollingFrame
+local scrollingframe = Instance.new("ScrollingFrame")
+scrollingframe.Name = "ViewerFrame"
+scrollingframe.Parent = screengui
+scrollingframe.Size = UDim2.new(0.15, 0, 0.25, 0)
+scrollingframe.Position = UDim2.new(0.35, 0, 0.25, 0)
+scrollingframe.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+scrollingframe.BackgroundTransparency = 0.1
+scrollingframe.BorderSizePixel = 0
+scrollingframe.ScrollBarThickness = 8
+scrollingframe.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollingframe.ScrollingDirection = Enum.ScrollingDirection.Y
+scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+scrollingframe.ScrollBarImageTransparency = 0.3
+
+-- Add a UIDragDetector to allow native frame dragging
+local dragDetector = Instance.new("UIDragDetector")
+dragDetector.Parent = scrollingframe
+
+-- Create a rounded corner
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = scrollingframe
+
+-- Function to get character and HRP
 local function getCharacter(targetPlayer)
 	local char = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
 	local hrp = char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart", 10)
 	return char, hrp
 end
 
-local screengui = playerGui:FindFirstChild("TurquoizViewer")
-local scrollingframe
-local minimiseButton
-local closeButton
-local isMinimized = false
-local orgSize
-local minSize = UDim2.new(0.05, 0, 0.05, 0)
-
+-- Function to create a teleport button for a player
 local function createPlayerButton(parent, targetPlayer)
 	local button = Instance.new("TextButton")
 	button.Name = targetPlayer.Name
@@ -41,14 +65,15 @@ local function createPlayerButton(parent, targetPlayer)
 	end)
 end
 
+-- Function to refresh player list
 local function refreshPlayerList()
 	scrollingframe:ClearAllChildren()
 
 	local layout = Instance.new("UIListLayout")
 	layout.Padding = UDim.new(0, 4)
-	layout.Parent = scrollingframe
 	layout.FillDirection = Enum.FillDirection.Vertical
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = scrollingframe
 
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= plr then
@@ -57,112 +82,9 @@ local function refreshPlayerList()
 	end
 end
 
-local function create()
-	screengui = Instance.new("ScreenGui")
-	screengui.Name = "TurquoizViewer"
-	screengui.ResetOnSpawn = false
-	screengui.IgnoreGuiInset = true
-	screengui.Parent = playerGui
+-- Initial population
+refreshPlayerList()
 
-	scrollingframe = Instance.new("ScrollingFrame")
-	scrollingframe.Name = "ViewerFrame"
-	scrollingframe.Parent = screengui
-	scrollingframe.Size = UDim2.new(0.15, 0, 0.25, 0)
-	scrollingframe.Position = UDim2.new(0.35, 0, 0.25, 0)
-	scrollingframe.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	scrollingframe.BackgroundTransparency = 0.1
-	scrollingframe.BorderSizePixel = 0
-	scrollingframe.ScrollBarThickness = 8
-	scrollingframe.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	scrollingframe.ScrollingDirection = Enum.ScrollingDirection.Y
-	scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
-	scrollingframe.ScrollBarImageTransparency = 0.3
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = scrollingframe
-
-	local dragDetector = Instance.new("UIDragDetector")
-	dragDetector.Parent = scrollingframe
-
-	orgSize = scrollingframe.Size
-
-	-- Minimize button
-	minimiseButton = Instance.new("TextButton")
-	minimiseButton.Parent = scrollingframe
-	minimiseButton.Size = UDim2.new(0.06, 0, 0.07, 0)
-	minimiseButton.Position = UDim2.new(0.8, 0, 0.05, 0)
-	minimiseButton.Text = "-"
-	minimiseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
-	minimiseButton.TextScaled = true
-	minimiseButton.ZIndex = 5
-
-	-- Close button
-	closeButton = Instance.new("TextButton")
-	closeButton.Parent = scrollingframe
-	closeButton.Size = UDim2.new(0.06, 0, 0.07, 0)
-	closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	closeButton.Text = "X"
-	closeButton.Position = UDim2.new(0.8, 0, 0.127, 0)
-	closeButton.ZIndex = 5
-
-	closeButton.Activated:Connect(function()
-		if screengui then
-			screengui:Destroy()
-		end
-		if script then
-			script:Destroy()
-		end
-	end)
-
-	minimiseButton.Activated:Connect(function()
-		if not isMinimized then
-			scrollingframe.Size = minSize
-			for _, i in scrollingframe:GetChildren() do
-				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
-					if i == minimiseButton then
-						i.Size = UDim2.new(0.5, 0, 0.5, 0)
-						i.Position = UDim2.new(0, 0, 0, 0)
-						i.Visible = true
-					elseif i == closeButton then
-						i.Size = UDim2.new(0.5, 0, 0.5, 0)
-						i.Position = UDim2.new(0, 0, 0.5, 0)
-						i.Visible = true
-					end
-				else
-					i.Visible = false
-				end
-			end
-			isMinimized = true
-			scrollingframe.Position = UDim2.new(-0.014166, 0, 0.7, 0)
-		else
-			scrollingframe.Size = orgSize
-			for _, i in scrollingframe:GetChildren() do
-				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
-					if i == minimiseButton then
-						i.Size = UDim2.new(0.06, 0, 0.07, 0)
-						i.Position = UDim2.new(0.8, 0, 0.05, 0)
-						i.Visible = true
-					elseif i == closeButton then
-						i.Size = UDim2.new(0.06, 0, 0.07, 0)
-						i.Position = UDim2.new(0.8, 0, 0.127, 0)
-						i.Visible = true
-					end
-				else
-					i.Visible = true
-				end
-			end
-			isMinimized = false
-		end
-	end)
-
-	refreshPlayerList()
-end
-
-if screengui then
-	screengui:Destroy()
-end
-create()
-
+-- Auto-refresh when players join/leave
 Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
