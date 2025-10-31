@@ -94,7 +94,7 @@ local function create()
 	scrollingframe = Instance.new("ScrollingFrame")
 	scrollingframe.Name = "ViewerFrame"
 	scrollingframe.Parent = screengui
-	scrollingframe.Size = UDim2.new(0.3, 0, 0.5, 0)
+	scrollingframe.Size = UDim2.new(0.15, 0, 0.25, 0)
 	scrollingframe.Position = UDim2.new(0.35, 0, 0.25, 0)
 	scrollingframe.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	scrollingframe.BackgroundTransparency = 0.1
