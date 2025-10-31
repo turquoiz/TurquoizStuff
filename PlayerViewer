@@ -1,46 +1,49 @@
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
 local plr = Players.LocalPlayer
+local playerGui = plr:WaitForChild("PlayerGui")
 
--- Create ScreenGui
-local screengui = Instance.new("ScreenGui")
-screengui.Name = "TurquoizViewer"
-screengui.ResetOnSpawn = false
-screengui.IgnoreGuiInset = true
-screengui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screengui.Parent = plr:WaitForChild("PlayerGui")
-
--- Create main ScrollingFrame
-local scrollingframe = Instance.new("ScrollingFrame")
-scrollingframe.Name = "ViewerFrame"
-scrollingframe.Parent = screengui
-scrollingframe.Size = UDim2.new(0.15, 0, 0.25, 0)
-scrollingframe.Position = UDim2.new(0.35, 0, 0.25, 0)
-scrollingframe.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-scrollingframe.BackgroundTransparency = 0.1
-scrollingframe.BorderSizePixel = 0
-scrollingframe.ScrollBarThickness = 8
-scrollingframe.AutomaticCanvasSize = Enum.AutomaticSize.Y
-scrollingframe.ScrollingDirection = Enum.ScrollingDirection.Y
-scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
-scrollingframe.ScrollBarImageTransparency = 0.3
-
--- Add a UIDragDetector to allow native frame dragging
-local dragDetector = Instance.new("UIDragDetector")
-dragDetector.Parent = scrollingframe
-
--- Create a rounded corner
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = scrollingframe
-
--- Function to get character and HRP
 local function getCharacter(targetPlayer)
 	local char = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
 	local hrp = char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart", 10)
 	return char, hrp
 end
 
--- Function to create a teleport button for a player
+local screengui = playerGui:FindFirstChild("TurquoizViewer")
+local scrollingframe
+
+local function makeDraggable(frame)
+	local dragging = false
+	local dragStart, startPos
+
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
 local function createPlayerButton(parent, targetPlayer)
 	local button = Instance.new("TextButton")
 	button.Name = targetPlayer.Name
@@ -65,7 +68,6 @@ local function createPlayerButton(parent, targetPlayer)
 	end)
 end
 
--- Function to refresh player list
 local function refreshPlayerList()
 	scrollingframe:ClearAllChildren()
 
@@ -82,9 +84,35 @@ local function refreshPlayerList()
 	end
 end
 
--- Initial population
-refreshPlayerList()
+local function create()
+	screengui = Instance.new("ScreenGui")
+	screengui.Name = "TurquoizViewer"
+	screengui.ResetOnSpawn = false
+	screengui.IgnoreGuiInset = true
+	screengui.Parent = playerGui
 
--- Auto-refresh when players join/leave
+	scrollingframe = Instance.new("ScrollingFrame")
+	scrollingframe.Name = "ViewerFrame"
+	scrollingframe.Parent = screengui
+	scrollingframe.Size = UDim2.new(0.15, 0, 0.25, 0)
+	scrollingframe.Position = UDim2.new(0.35, 0, 0.25, 0)
+	scrollingframe.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	scrollingframe.BackgroundTransparency = 0.1
+	scrollingframe.BorderSizePixel = 0
+	scrollingframe.ScrollBarThickness = 8
+	scrollingframe.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scrollingframe.ScrollingDirection = Enum.ScrollingDirection.Y
+	scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+	scrollingframe.ScrollBarImageTransparency = 0.3
+
+	makeDraggable(scrollingframe)
+	refreshPlayerList()
+end
+
+if screengui then
+	screengui:Destroy()
+end
+create()
+
 Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
