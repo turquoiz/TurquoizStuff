@@ -1,5 +1,4 @@
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 
 local plr = Players.LocalPlayer
 local playerGui = plr:WaitForChild("PlayerGui")
@@ -12,37 +11,6 @@ end
 
 local screengui = playerGui:FindFirstChild("TurquoizViewer")
 local scrollingframe
-
-local function makeDraggable(frame)
-	local dragging = false
-	local dragStart, startPos
-
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
 
 local function createPlayerButton(parent, targetPlayer)
 	local button = Instance.new("TextButton")
@@ -73,9 +41,9 @@ local function refreshPlayerList()
 
 	local layout = Instance.new("UIListLayout")
 	layout.Padding = UDim.new(0, 4)
+	layout.Parent = scrollingframe
 	layout.FillDirection = Enum.FillDirection.Vertical
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = scrollingframe
 
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= plr then
@@ -105,7 +73,10 @@ local function create()
 	scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
 	scrollingframe.ScrollBarImageTransparency = 0.3
 
-	makeDraggable(scrollingframe)
+	-- Use UIDragDetector instead of manual dragging
+	local dragDetector = Instance.new("UIDragDetector")
+	dragDetector.Parent = scrollingframe
+
 	refreshPlayerList()
 end
 
