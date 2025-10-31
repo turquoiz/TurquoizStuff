@@ -11,6 +11,11 @@ end
 
 local screengui = playerGui:FindFirstChild("TurquoizViewer")
 local scrollingframe
+local minimiseButton
+local closeButton
+local isMinimized = false
+local orgSize
+local minSize = UDim2.new(0.05, 0, 0.05, 0)
 
 local function createPlayerButton(parent, targetPlayer)
 	local button = Instance.new("TextButton")
@@ -73,9 +78,83 @@ local function create()
 	scrollingframe.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
 	scrollingframe.ScrollBarImageTransparency = 0.3
 
-	-- Use UIDragDetector instead of manual dragging
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = scrollingframe
+
 	local dragDetector = Instance.new("UIDragDetector")
 	dragDetector.Parent = scrollingframe
+
+	orgSize = scrollingframe.Size
+
+	-- Minimize button
+	minimiseButton = Instance.new("TextButton")
+	minimiseButton.Parent = scrollingframe
+	minimiseButton.Size = UDim2.new(0.06, 0, 0.07, 0)
+	minimiseButton.Position = UDim2.new(0.8, 0, 0.05, 0)
+	minimiseButton.Text = "-"
+	minimiseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+	minimiseButton.TextScaled = true
+	minimiseButton.ZIndex = 5
+
+	-- Close button
+	closeButton = Instance.new("TextButton")
+	closeButton.Parent = scrollingframe
+	closeButton.Size = UDim2.new(0.06, 0, 0.07, 0)
+	closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	closeButton.Text = "X"
+	closeButton.Position = UDim2.new(0.8, 0, 0.127, 0)
+	closeButton.ZIndex = 5
+
+	closeButton.Activated:Connect(function()
+		if screengui then
+			screengui:Destroy()
+		end
+		if script then
+			script:Destroy()
+		end
+	end)
+
+	minimiseButton.Activated:Connect(function()
+		if not isMinimized then
+			scrollingframe.Size = minSize
+			for _, i in scrollingframe:GetChildren() do
+				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
+					if i == minimiseButton then
+						i.Size = UDim2.new(0.5, 0, 0.5, 0)
+						i.Position = UDim2.new(0, 0, 0, 0)
+						i.Visible = true
+					elseif i == closeButton then
+						i.Size = UDim2.new(0.5, 0, 0.5, 0)
+						i.Position = UDim2.new(0, 0, 0.5, 0)
+						i.Visible = true
+					end
+				else
+					i.Visible = false
+				end
+			end
+			isMinimized = true
+			scrollingframe.Position = UDim2.new(-0.014166, 0, 0.7, 0)
+		else
+			scrollingframe.Size = orgSize
+			for _, i in scrollingframe:GetChildren() do
+				if i == minimiseButton or i == closeButton or i.Name == "UICorner" or i.Name == "UIDragDetector" then
+					if i == minimiseButton then
+						i.Size = UDim2.new(0.06, 0, 0.07, 0)
+						i.Position = UDim2.new(0.8, 0, 0.05, 0)
+						i.Visible = true
+					elseif i == closeButton then
+						i.Size = UDim2.new(0.06, 0, 0.07, 0)
+						i.Position = UDim2.new(0.8, 0, 0.127, 0)
+						i.Visible = true
+					end
+				else
+					i.Visible = true
+				end
+			end
+			isMinimized = false
+		end
+	end)
 
 	refreshPlayerList()
 end
