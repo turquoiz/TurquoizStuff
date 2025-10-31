@@ -1,0 +1,98 @@
+-- remember to use UDim.fromScale() instead of UDim.new() for the position and size of the frame for cross platform support if used with other screen sizes
+-- made by turquoiz1772
+
+local isMinimised = false
+local frame, title, closebutton, minimisebutton, lastPos -- add ui element definitions here for entire script access
+
+local player = game.Players.LocalPlayer
+local playergui = player.PlayerGui
+local screenguiname = "TurquoizTemplate" -- internal name of the screengui
+local screengui = playergui:FindFirstChild(screenguiname)
+local framename = "Frame" -- internal name of the frame
+local titletext = "Turquoiz Template" -- title text
+
+local function makeDraggable(uitomodify) -- use to make draggable ui
+	local dragdetector = Instance.new("UIDragDetector")
+	dragdetector.Parent = uitomodify
+end
+
+local function create()
+	screengui = Instance.new("ScreenGui")
+	screengui.Parent = playergui
+	screengui.Name = screenguiname
+	screengui.IgnoreGuiInset = true
+
+	frame = Instance.new("Frame") -- add ui here, or create more frames for extra windows
+	frame.Parent = screengui -- put in screengui
+	frame.Name = framename
+	frame.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+	frame.Size = UDim2.fromScale(0.15, 0.3) -- define size to make visible
+	frame.Position = UDim2.fromScale(0.2, 0.6) -- starts from top left by default
+
+	makeDraggable(frame) -- use on ui to make draggable
+
+	title = Instance.new("TextLabel") -- default title has a size of UDim2.fromScale(0, 0) you have to change it for the background to be visible
+	title.Parent = frame
+	title.Position = UDim2.fromScale(0.5, 0.05)
+	title.TextSize = 16
+	title.Text = titletext
+	title.ZIndex = 1
+	title.BackgroundTransparency = 1
+
+	closebutton = Instance.new("TextButton")
+	closebutton.Parent = frame
+	closebutton.Position = UDim2.fromScale(0.95, 0.02)
+	closebutton.Text = "X"
+	closebutton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	closebutton.ZIndex = 2
+	closebutton.Size = UDim2.fromScale(0.04, 0.04)
+
+	closebutton.Activated:Connect(function() -- close button functionality
+		screengui:Destroy()
+	end)
+
+	minimisebutton = Instance.new("TextButton")
+	minimisebutton.Parent = frame
+	minimisebutton.Position = UDim2.fromScale(0.95, 0.06)
+	minimisebutton.Text = "-"
+	minimisebutton.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+	minimisebutton.ZIndex = 2
+	minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
+
+	minimisebutton.Activated:Connect(function() -- minimise button, must be changed on ui added if you want it to work
+		if isMinimised then
+			frame.Size = UDim2.fromScale(0.15, 0.3)
+			frame.Position = lastPos
+			minimisebutton.Position = UDim2.fromScale(0.95, 0.06)
+			minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
+			minimisebutton.Text = "-"
+			closebutton.Position = UDim2.fromScale(0.95, 0.02)
+			closebutton.Size = UDim2.fromScale(0.04, 0.04)
+
+			-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
+			title.Visible = true
+
+			isMinimised = false
+		else
+			lastPos = frame.Position
+			frame.Size = UDim2.fromScale(0.00984, 0.03472)
+			frame.Position = UDim2.fromScale(0, 0.6) -- position to snap to when minimised
+			minimisebutton.Position = UDim2.fromScale(0, 0.5)
+			minimisebutton.Size = UDim2.fromScale(1, 0.5)
+			minimisebutton.Text = "+"
+			closebutton.Position = UDim2.fromScale(0, 0)
+			closebutton.Size = UDim2.fromScale(1, 0.5)
+
+			-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
+			title.Visible = false
+
+			isMinimised = true
+		end
+	end)
+end
+
+if screengui then -- destroy old screengui if script has been run already
+	screengui:Destroy()
+end
+
+create() -- create gui
