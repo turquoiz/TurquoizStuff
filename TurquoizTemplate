@@ -1,8 +1,11 @@
 -- remember to use UDim.fromScale() instead of UDim.new() for the position and size of the frame for cross platform support if used with other screen sizes
 -- made by turquoiz1772
 
-local isMinimised = false
-local frame, title, closebutton, minimisebutton, lastPos -- add ui element definitions here for entire script access
+-- minimising stuff
+local isMinimised = false -- flag for checking if the frame is minimised
+local lastPos -- used for putting the frame back to where it was when maximised
+
+local frame, title, closebutton, minimisebutton -- add ui element definitions here for entire script access
 
 local player = game.Players.LocalPlayer
 local playergui = player.PlayerGui
@@ -14,6 +17,37 @@ local titletext = "Turquoiz Template" -- title text
 local function makeDraggable(uitomodify) -- use to make draggable ui
 	local dragdetector = Instance.new("UIDragDetector")
 	dragdetector.Parent = uitomodify
+end
+
+local function minimise()
+	lastPos = frame.Position
+	frame.Size = UDim2.fromScale(0.00984, 0.03472)
+	frame.Position = UDim2.fromScale(0, 0.6) -- position to snap to when minimised
+	minimisebutton.Position = UDim2.fromScale(0, 0.5)
+	minimisebutton.Size = UDim2.fromScale(1, 0.5)
+	minimisebutton.Text = "+"
+	closebutton.Position = UDim2.fromScale(0, 0)
+	closebutton.Size = UDim2.fromScale(1, 0.5)
+
+	-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
+	title.Visible = false
+
+	isMinimised = true
+end
+
+local function unminimise()
+	frame.Size = UDim2.fromScale(0.15, 0.3)
+	frame.Position = lastPos
+	minimisebutton.Position = UDim2.fromScale(0.95, 0.06)
+	minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
+	minimisebutton.Text = "-"
+	closebutton.Position = UDim2.fromScale(0.95, 0.02)
+	closebutton.Size = UDim2.fromScale(0.04, 0.04)
+
+	-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
+	title.Visible = true
+
+	isMinimised = false
 end
 
 local function create()
@@ -61,38 +95,48 @@ local function create()
 
 	minimisebutton.Activated:Connect(function() -- minimise button, must be changed on ui added if you want it to work
 		if isMinimised then
-			frame.Size = UDim2.fromScale(0.15, 0.3)
-			frame.Position = lastPos
-			minimisebutton.Position = UDim2.fromScale(0.95, 0.06)
-			minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
-			minimisebutton.Text = "-"
-			closebutton.Position = UDim2.fromScale(0.95, 0.02)
-			closebutton.Size = UDim2.fromScale(0.04, 0.04)
-
-			-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
-			title.Visible = true
-
-			isMinimised = false
+			unminimise()
 		else
-			lastPos = frame.Position
-			frame.Size = UDim2.fromScale(0.00984, 0.03472)
-			frame.Position = UDim2.fromScale(0, 0.6) -- position to snap to when minimised
-			minimisebutton.Position = UDim2.fromScale(0, 0.5)
-			minimisebutton.Size = UDim2.fromScale(1, 0.5)
-			minimisebutton.Text = "+"
-			closebutton.Position = UDim2.fromScale(0, 0)
-			closebutton.Size = UDim2.fromScale(1, 0.5)
-
-			-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
-			title.Visible = false
-
-			isMinimised = true
+			minimise()
 		end
 	end)
 end
 
-if screengui then -- destroy old screengui if script has been run already
+local function onCharacterAdded(character)
+	local humanoid = character:WaitForChild("Humanoid")
+
+	humanoid.Died:Connect(function()
+		if isMinimised then return end
+		if frame then
+			lastPos = frame.Position
+		end
+	end)
+
+	if screengui then
+		screengui:Destroy()
+	end
+
+	create()
+
+	if lastPos then
+		frame.Position = lastPos
+	end
+	
+	if isMinimised then
+		minimise()
+	end
+end
+
+if screengui then
 	screengui:Destroy()
 end
 
-create() -- create gui
+create()
+
+-- handle the character
+if player.Character then
+	onCharacterAdded(player.Character)
+end
+
+-- hook to spawn and respawn
+player.CharacterAdded:Connect(onCharacterAdded)
