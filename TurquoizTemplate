@@ -7,6 +7,10 @@ local lastPos -- used for putting the frame back to where it was when maximised
 
 local frame, title, closebutton, minimisebutton -- add ui element definitions here for entire script access
 
+local testButton -- example, remove if you want
+
+local createdInstances = {}
+
 local player = game.Players.LocalPlayer
 local playergui = player.PlayerGui
 local screenguiname = "TurquoizTemplate" -- internal name of the screengui
@@ -19,7 +23,11 @@ local function makeDraggable(uitomodify) -- use to make draggable ui
 	dragdetector.Parent = uitomodify
 end
 
-local function minimise()
+local function visibleToggle(value)
+	title.Visible = value -- add the rest of the ui elements you want to be invisible when minimised
+end
+
+local function minimise() -- minimise function
 	lastPos = frame.Position
 	frame.Size = UDim2.fromScale(0.00984, 0.03472)
 	frame.Position = UDim2.fromScale(0, 0.6) -- position to snap to when minimised
@@ -29,25 +37,51 @@ local function minimise()
 	closebutton.Position = UDim2.fromScale(0, 0)
 	closebutton.Size = UDim2.fromScale(1, 0.5)
 
-	-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
-	title.Visible = false
+	visibleToggle(false)
 
 	isMinimised = true
 end
 
-local function unminimise()
+local function unminimise() -- unminimise function
 	frame.Size = UDim2.fromScale(0.15, 0.3)
-	frame.Position = lastPos
+	if lastPos then frame.Position = lastPos end
 	minimisebutton.Position = UDim2.fromScale(0.95, 0.06)
 	minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
 	minimisebutton.Text = "-"
 	closebutton.Position = UDim2.fromScale(0.95, 0.02)
 	closebutton.Size = UDim2.fromScale(0.04, 0.04)
 
-	-- add all ui components here, except anything that doesnt have a visible property, close button, minimise button, and the frame itself
-	title.Visible = true
+	visibleToggle(true)
 
 	isMinimised = false
+end
+
+local function makeButton(name, text, position, size, parent, zindex) -- helper to make text buttons with various properties, you can change as needed
+
+	local button = Instance.new("TextButton")
+	button.Parent = parent
+	button.Text = text
+	button.Position = position
+	button.Size = size
+	button.Name = name
+	button.ZIndex = zindex
+
+	table.insert(createdInstances, button)
+	return button
+end
+
+local function makeTextBox(name, text, position, size, parent, zindex) -- helper to make text boxes with various properties, you can change as needed
+
+	local textbox = Instance.new("TextBox")
+	textbox.Parent = parent
+	textbox.Text = text
+	textbox.Position = position
+	textbox.Size = size
+	textbox.Name = name
+	textbox.ZIndex = zindex
+
+	table.insert(createdInstances, textbox)
+	return textbox
 end
 
 local function create()
@@ -93,12 +127,62 @@ local function create()
 	minimisebutton.ZIndex = 2
 	minimisebutton.Size = UDim2.fromScale(0.04, 0.04)
 
-	minimisebutton.Activated:Connect(function() -- minimise button, must be changed on ui added if you want it to work
+	minimisebutton.Activated:Connect(function() -- controls minimising and unminimising
 		if isMinimised then
 			unminimise()
 		else
 			minimise()
 		end
+	end)
+
+	local function reload() -- change to global function if you want
+		-- Store current position before destroying anything
+		local currentPos = nil
+		if frame and frame.Parent then
+			currentPos = frame.Position
+			if isMinimised then
+				print("Unminimising...")
+				unminimise()
+				print("Done.")
+			end
+		end
+
+		print("Destroying created buttons...")
+		-- Clear created instances table safely
+		for _, instance in pairs(createdInstances) do
+			if instance and instance.Parent then
+				instance:Destroy()
+			end
+		end
+		print("Done.")
+		print("Clearing table...")
+		table.clear(createdInstances)
+		print("Done.")
+
+		-- Destroy screengui if it exists
+		if screengui and screengui.Parent then
+			screengui:Destroy()
+		end
+
+		-- Recreate everything
+		print("Recreating...")
+		create()
+		print("Done.")
+
+		-- Restore position if we had one
+		print("Moving frame...")
+		if currentPos and frame then
+			frame.Position = currentPos
+		end
+		print("Done.")
+		print("Reloaded Successfully.")
+	end
+
+	testButton = makeButton("TestButton", "Test Button", UDim2.fromScale(0.05, 0.2), UDim2.fromScale(0.9, 0.2), frame, 2) -- example, remove if you want
+
+	testButton.Activated:Connect(function() -- example, remove if you want
+		reload()
+		print("Reloaded")
 	end)
 end
 
@@ -121,7 +205,7 @@ local function onCharacterAdded(character)
 	if lastPos then
 		frame.Position = lastPos
 	end
-	
+
 	if isMinimised then
 		minimise()
 	end
