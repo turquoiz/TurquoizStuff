@@ -4,6 +4,7 @@
 -- minimising stuff
 local isMinimised = false -- flag for checking if the frame is minimised
 local lastPos -- used for putting the frame back to where it was when maximised
+local isClosed = false -- flag for checking if the GUI was closed by user
 
 local frame, title, closebutton, minimisebutton -- add ui element definitions here for entire script access
 
@@ -25,7 +26,6 @@ end
 
 local function visibleToggle(value)
 	title.Visible = value -- add the rest of the ui elements you want to be invisible when minimised
-	testButton.Visible = value
 end
 
 local function minimise() -- minimise function
@@ -117,6 +117,7 @@ local function create()
 	closebutton.Size = UDim2.fromScale(0.04, 0.04)
 
 	closebutton.Activated:Connect(function() -- close button functionality
+		isClosed = true -- mark as closed by user
 		screengui:Destroy()
 	end)
 
@@ -137,22 +138,21 @@ local function create()
 	end)
 
 	local function reload() -- change to global function if you want
-		-- Store current position before destroying anything
 		local currentPos = nil
 		if frame and frame.Parent then
 			currentPos = frame.Position
 			if isMinimised then
 				print("Unminimising...")
-				unminimise()
+				unminimise() -- unminimise. obviously
 				print("Done.")
 			end
 		end
 
 		print("Destroying created buttons...")
-		-- Clear created instances table safely
-		for _, instance in pairs(createdInstances) do
+		for _, instance in pairs(createdInstances) do -- destroy buttons made by helper before destroying screengui
 			if instance and instance.Parent then
 				instance:Destroy()
+				instance = nil
 			end
 		end
 		print("Done.")
@@ -160,19 +160,16 @@ local function create()
 		table.clear(createdInstances)
 		print("Done.")
 
-		-- Destroy screengui if it exists
-		if screengui and screengui.Parent then
+		if screengui and screengui.Parent then -- destroy screengui
 			screengui:Destroy()
 		end
 
-		-- Recreate everything
 		print("Recreating...")
-		create()
+		create() -- recreate
 		print("Done.")
 
-		-- Restore position if we had one
 		print("Moving frame...")
-		if currentPos and frame then
+		if currentPos and frame then -- move frame back
 			frame.Position = currentPos
 		end
 		print("Done.")
@@ -197,18 +194,24 @@ local function onCharacterAdded(character)
 		end
 	end)
 
+	if frame then
+		frame:Destroy()
+	end
+
 	if screengui then
 		screengui:Destroy()
 	end
 
-	create()
+	if not isClosed then
+		create()
 
-	if lastPos then
-		frame.Position = lastPos
-	end
+		if lastPos then
+			frame.Position = lastPos
+		end
 
-	if isMinimised then
-		minimise()
+		if isMinimised then
+			minimise()
+		end
 	end
 end
 
