@@ -25,6 +25,7 @@ end
 
 local function visibleToggle(value)
 	title.Visible = value -- add the rest of the ui elements you want to be invisible when minimised
+	testButton.Visible = value
 end
 
 local function minimise() -- minimise function
